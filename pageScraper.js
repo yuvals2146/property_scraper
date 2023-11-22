@@ -1,10 +1,9 @@
 // Purpose: Scrape data from Broward County Property Appraiser
 const { saveCSV, initCSV, addRow } = require("./csvMaker");
-const inputAdresses = [
-  "address"
-];
+const inputAdresses = [];
 
-let csvContent = "data:text/csv;charset=utf-8,";
+let noResultsFoundCount = 0;
+let multipleResultsFoundCount = 0;
 
 const scraperObject = {
   //Change url to link you're scraping from
@@ -18,43 +17,83 @@ const scraperObject = {
     // await page.type("#txtField", "7311 LYONS RD");
     // await page.keyboard.press("Enter"); // Enter Key
     // await page.waitForTimeout(3000);
-    await initCSV({
-      propertyId: "",
-      propertyOwnerOne: "",
-      propertyOwnerTwo: "",
-      propertyOwnerThree: "",
-      propertyOwnerFour: "",
-      physicalAddress: "",
-      zipCode: "",
-      propertyUse: "",
-      areaSF: "",
-      adjBldgSF: "",
-      yearBuilt: "",
-    });
+
+    await initialCSV();
 
     for (let i = 0; i < inputAdresses.length; i++) {
       await page.goto(this.url);
       await page.waitForTimeout(3000);
       await page.waitForSelector("#txtField");
       await page.type("#txtField", inputAdresses[i]);
+
+      // count li elements under ul with id="results"
+      try {
+        await page.waitForSelector("#results > li", { timeout: 5000 });
+      } catch (err) {
+        console.log("No results found!");
+        noResultsFoundCount++;
+        addRow({ address: inputAdresses[i], multipleResults: false }, false);
+        console.log(
+          `Scraped ${
+            i - noResultsFoundCount - multipleResultsFoundCount + 1
+          } and of ${
+            inputAdresses.length
+          } with ${noResultsFoundCount} with no results and ${multipleResultsFoundCount} with multiple results properties...`
+        );
+
+        console.log("Scraping next property...");
+        continue;
+      }
+
+      const results = (await page.$$("#results > li")).length;
+      console.log(results);
+
+      if (results > 1) {
+        console.log("Multiple results found!");
+        multipleResultsFoundCount++;
+        addRow(
+          {
+            address: inputAdresses[i],
+            multipleResults: true,
+            amountOfResults: results,
+          },
+          false
+        );
+        console.log(
+          `Scraped ${
+            i - noResultsFoundCount - multipleResultsFoundCount + 1
+          } and of ${
+            inputAdresses.length
+          } with ${noResultsFoundCount} with no results and ${multipleResultsFoundCount} with multiple results properties...`
+        );
+        console.log("Scraping next property...");
+        continue;
+      }
+
       await page.keyboard.press("Enter"); // Enter Key
       await page.waitForTimeout(3000);
       const res = await scrapeProperty(page);
       console.log(res);
-      await addRow(res);
+      await addRow(res, true);
       if (i === inputAdresses.length - 1) {
         console.log("Scraping complete!");
       } else {
         console.log(
-          `Scraped ${i + 1} of ${inputAdresses.length} properties...`
+          `Scraped ${
+            i - noResultsFoundCount - multipleResultsFoundCount + 1
+          } and of ${
+            inputAdresses.length
+          } with ${noResultsFoundCount} with no results and ${multipleResultsFoundCount} with multiple results properties...`
         );
         console.log("Scraping next property...");
       }
     }
-    //Program successfully completed
+
+    // Program successfully completed
     await browser.close();
     console.log("Program completed!");
-    await saveCSV();
+    await saveCSV(false);
+    await saveCSV(true);
   },
 };
 
@@ -162,6 +201,34 @@ const scrapeProperty = async (page) => {
   };
 
   return result;
+};
+
+const initialCSV = async () => {
+  await initCSV(
+    {
+      propertyId: "",
+      propertyOwnerOne: "",
+      propertyOwnerTwo: "",
+      propertyOwnerThree: "",
+      propertyOwnerFour: "",
+      physicalAddress: "",
+      zipCode: "",
+      propertyUse: "",
+      areaSF: "",
+      adjBldgSF: "",
+      yearBuilt: "",
+    },
+    true
+  );
+
+  await initCSV(
+    {
+      address: "",
+      multipleResults: false,
+      amountOfResults: 0,
+    },
+    false
+  );
 };
 
 module.exports = scraperObject;

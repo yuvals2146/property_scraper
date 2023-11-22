@@ -1,21 +1,38 @@
 csvRows = [];
 
+invalidAddresses = [];
+
 const { appendFileSync } = require("fs");
 
-const initCSV = (data) => {
-  const headers = Object.keys(data);
-  csvRows.push(headers.join(","));
+const initCSV = (data, valid) => {
+  if (valid) {
+    const headers = Object.keys(data);
+    csvRows.push(headers.join(","));
+  } else {
+    const headers = Object.keys(data);
+    invalidAddresses.push(headers.join(","));
+  }
 };
 
-const addRow = (data) => {
+const addRow = (data, valid) => {
   const values = Object.values(data).join(",");
-  csvRows.push(values);
+  if (valid) {
+    console.log("add to valid");
+    csvRows.push(values);
+  } else {
+    console.log("add to *unvalid*");
+    invalidAddresses.push(values);
+  }
 };
 
-const saveCSV = function () {
+const saveCSV = function (valid) {
   const timestamp = new Date().getTime();
+  const flieName = valid
+    ? `./artifacts/properties-${timestamp}.csv`
+    : `./artifacts/invalid-addresses-${timestamp}.csv`;
+  const table = valid ? csvRows : invalidAddresses;
   try {
-    appendFileSync(`./properties-${timestamp}.csv`, csvRows.join("\r\n"));
+    appendFileSync(flieName, table.join("\r\n"));
   } catch (err) {
     console.error(err);
   }
