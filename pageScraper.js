@@ -15,11 +15,7 @@ let newCity = "";
 let errorMessages;
 let startTime = new Date().getTime();
 let cleanExit = false;
-// create a cluster that handles 10 parallel browsers
-const cluster = await Cluster.launch({
-  concurrency: Cluster.CONCURRENCY_BROWSER,
-  maxConcurrency: 10,
-});
+
 
 const scraperObject = {
   //Change url to link you're scraping from
@@ -38,7 +34,7 @@ const scraperObject = {
     await initialCSV();
     const inputAdresses = [];
     //const properties = await importProperties("./test.csv");
-    
+
     const properties = await importProperties("./finle.csv");
     const propertiesLength = properties.length;
     for (i = 0; i < propertiesLength; i++) {
