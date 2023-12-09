@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/hellosurbhi/puppeteer-starter-code#readme",
   "dependencies": {
+    "csvtojson": "^2.0.10",
     "puppeteer": "^5.5.0"
   }
 }

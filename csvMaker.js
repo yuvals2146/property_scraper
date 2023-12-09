@@ -17,22 +17,32 @@ const initCSV = (data, valid) => {
 const addRow = (data, valid) => {
   const values = Object.values(data).join(",");
   if (valid) {
-    console.log("add to valid");
     csvRows.push(values);
   } else {
-    console.log("add to *unvalid*");
     invalidAddresses.push(values);
   }
 };
 
-const saveCSV = function (valid) {
+const saveCSV = function (closeResonse) {
   const timestamp = new Date().getTime();
-  const flieName = valid
-    ? `./artifacts/properties-${timestamp}.csv`
-    : `./artifacts/invalid-addresses-${timestamp}.csv`;
-  const table = valid ? csvRows : invalidAddresses;
+  const flieNameValid = `properties-${timestamp}.csv`;
+  const filePath = closeResonse ? `./artifacts/full/` : `./artifacts/errors/`;
   try {
-    appendFileSync(flieName, table.join("\r\n"));
+    appendFileSync(`${filePath}${flieNameValid}`, csvRows.join("\r\n"));
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+const saveFaliedinvalidAddresses = function (closeResonse) {
+  const timestamp = new Date().getTime();
+  const flieNameInvalid = `invalid-addresses-${timestamp}.csv`;
+  const filePath = closeResonse ? `./artifacts/full/` : `./artifacts/errors/`;
+  try {
+    appendFileSync(
+      `${filePath}${flieNameInvalid}`,
+      invalidAddresses.join("\r\n")
+    );
   } catch (err) {
     console.error(err);
   }
@@ -42,4 +52,5 @@ module.exports = {
   initCSV,
   addRow,
   saveCSV,
+  saveFaliedinvalidAddresses,
 };
